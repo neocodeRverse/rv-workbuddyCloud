@@ -10,6 +10,14 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.OpenApi.Models;
+using System.Data.SqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,14 +44,21 @@ var connectionString = connectionStringSecret.Value;
 // Console.WriteLine(connectionString);
 var BlobSecret = secretClient.GetSecret(keyVaultConfig.BlobSecret).Value;
 var BlobString = BlobSecret.Value;
-Console.WriteLine(BlobString);
+//Console.WriteLine(BlobString);
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    options.JsonSerializerOptions.PropertyNamingPolicy = null; // Use original property names
+
+});
+
+builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString, 
         sqlServerOptions => sqlServerOptions.EnableRetryOnFailure()));
-
-builder.Services.AddSingleton(new BlobService(BlobString, builder.Configuration["BlobContainerName"]));
-builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -68,13 +83,9 @@ builder.Services.AddSwaggerGen(c =>
     });
 }); //adddd
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-{
-    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-    options.JsonSerializerOptions.PropertyNamingPolicy = null; // Use original property names
+builder.Services.AddSingleton(new BlobService(BlobString, builder.Configuration["BlobContainerName"]));
 
-});
+
 
 // builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("conn")));
 
