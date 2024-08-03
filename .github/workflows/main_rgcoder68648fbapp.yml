@@ -28,10 +28,6 @@ jobs:
           cd workbuddy/dotnetapp/  # Adjust this path to your project directory
           dotnet build --configuration Release
 
-      - name: Apply EF Migrations
-        run: |
-          cd workbuddy/dotnetapp/
-          dotnet ef database update
    
       - name: Publish artifact
         run: |
